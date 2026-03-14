@@ -1,0 +1,19 @@
+Student Handbook
+
+Welcome to the Smart Campus Help Desk System.
+
+This handbook outlines the policies and procedures for students at our university.
+
+1. Academic Integrity
+   - Plagiarism is strictly prohibited.
+   - All assignments must be original work.
+
+2. Code of Conduct
+   - Respect fellow students and staff.
+   - Maintain a positive learning environment.
+
+3. IT Policies
+   - Use university computers responsibly.
+   - Do not share passwords.
+
+For more information, contact the help desk.

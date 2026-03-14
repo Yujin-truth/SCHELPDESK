@@ -1,0 +1,19 @@
+ICT Policy
+
+1. Acceptable Use
+   - University IT resources are for academic purposes.
+   - Personal use is limited.
+
+2. Security
+   - Use strong passwords.
+   - Report suspicious activity immediately.
+
+3. Data Protection
+   - Do not share personal data.
+   - Comply with GDPR and local laws.
+
+4. Internet Usage
+   - No illegal downloads.
+   - Respect bandwidth limits.
+
+For technical support, use the help desk system.
