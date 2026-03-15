@@ -18,7 +18,9 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin:  ["http://localhost:5173"] // allow frontend access (change later for security)
+}));
 app.use(express.json());
 
 // Routes
@@ -31,18 +33,30 @@ app.use('/api/audit', auditRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/faqs', faqRoutes);
 
+// Root route (important for Render)
+app.get('/', (req, res) => {
+  res.send('Helpdesk API is running...');
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Error handler
+// Global error handler
 app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(err.status || 500).json({ message: err.message || 'Server error' });
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    message: err.message || 'Server error'
+  });
 });
 
+// Render / production port
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
