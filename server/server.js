@@ -19,7 +19,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin:  ["http://localhost:5173"] // allow frontend access (change later for security)
+  origin:  ["http://localhost:5173"] 
 }));
 app.use(express.json());
 

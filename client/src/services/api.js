@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: '/api',
+  baseURL: 'https://uniassist-9yf9.onrender.com/api',
   headers: {
     'Content-Type': 'application/json',
   },
