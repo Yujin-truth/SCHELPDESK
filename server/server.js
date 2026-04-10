@@ -19,7 +19,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin:  ["https://schelpdesk-1.onrender.com"] 
+  origin: ["http://localhost:5173", "https://schelpdesk-1.onrender.com"]
 }));
 app.use(express.json());
 
