@@ -12,20 +12,13 @@ export default function TopBar() {
 
   return (
     <header className="topbar">
-      <div className="topbar__left">
-        <div className="topbar__logo">UNIASSIST</div>
-        <div className="topbar__title">Campus Help Desk</div>
-      </div>
+      <div className="brand">UNIASSIST</div>
 
       {user && (
-        <div className="topbar__actions">
-          <div className="topbar__user">
-            <span className="topbar__user-name">{user.name}</span>
-            <span className="topbar__user-role">{user.role}</span>
-          </div>
-          <button className="topbar__logout" onClick={handleLogout}>
-            Logout
-          </button>
+        <div className="user-actions">
+          <span className="user-role">{user.role}</span>
+          <span className="user-name">{user.name}</span>
+          <button onClick={handleLogout}>Logout</button>
         </div>
       )}
     </header>

@@ -8,6 +8,9 @@ yarn-error.log*
 
 # Env
 .env
+.env.local
+.env.production
+.env.*.local
 
 # Vite
 dist/

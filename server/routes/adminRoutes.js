@@ -1,32 +1,32 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const User = require('../models/User');
-const Ticket = require('../models/Ticket');
+const { User, Ticket } = require('../models');
 const { protect, requireRole } = require('../middleware/authMiddleware');
+const { validateRegister } = require('../middleware/validation');
 
 const router = express.Router();
 
 // List all staff (admin only)
 router.get('/staff', protect, requireRole('admin'), async (req, res, next) => {
   try {
-    const staff = await User.find({ role: 'staff' }).select('-password');
-    res.json(staff);
+    const staff = await User.findAll({
+      where: { role: 'staff' },
+      attributes: { exclude: ['password'] },
+    });
+    res.json({ success: true, data: staff });
   } catch (err) {
     next(err);
   }
 });
 
 // Create a staff user (admin only)
-router.post('/staff', protect, requireRole('admin'), async (req, res, next) => {
+router.post('/staff', protect, requireRole('admin'), validateRegister, async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email, and password are required' });
-    }
 
-    const existing = await User.findOne({ email: email.toLowerCase() });
+    const existing = await User.findOne({ where: { email: email.toLowerCase() } });
     if (existing) {
-      return res.status(409).json({ message: 'Email already registered' });
+      return res.status(409).json({ success: false, message: 'Email already registered' });
     }
 
     const hashed = await bcrypt.hash(password, 10);
@@ -38,10 +38,13 @@ router.post('/staff', protect, requireRole('admin'), async (req, res, next) => {
     });
 
     res.status(201).json({
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
+      success: true,
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      }
     });
   } catch (err) {
     next(err);
@@ -51,12 +54,23 @@ router.post('/staff', protect, requireRole('admin'), async (req, res, next) => {
 // Admin ticket overview
 router.get('/tickets', protect, requireRole('admin'), async (req, res, next) => {
   try {
-    const tickets = await Ticket.find()
-      .sort({ createdAt: -1 })
-      .populate('student', 'name email yearOfStudy school admissionNumber dob course')
-      .populate('assignedTo', 'name email');
+    const tickets = await Ticket.findAll({
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: User,
+          as: 'student',
+          attributes: ['id', 'name', 'email', 'yearOfStudy', 'school', 'admissionNumber', 'dob', 'course'],
+        },
+        {
+          model: User,
+          as: 'assignedTo',
+          attributes: ['id', 'name', 'email'],
+        },
+      ],
+    });
 
-    res.json(tickets);
+    res.json({ success: true, data: tickets });
   } catch (err) {
     next(err);
   }
@@ -67,32 +81,42 @@ router.put('/tickets/:id/assign', protect, requireRole('admin'), async (req, res
   try {
     const { staffId } = req.body;
     if (!staffId) {
-      return res.status(400).json({ message: 'Staff ID is required' });
+      return res.status(400).json({ success: false, message: 'Staff ID is required' });
     }
 
-    const ticket = await Ticket.findById(req.params.id);
+    const ticket = await Ticket.findByPk(req.params.id);
     if (!ticket) {
-      return res.status(404).json({ message: 'Ticket not found' });
+      return res.status(404).json({ success: false, message: 'Ticket not found' });
     }
 
     // Check if staff exists and is staff role
-    const staff = await User.findById(staffId);
+    const staff = await User.findByPk(staffId);
     if (!staff || staff.role !== 'staff') {
-      return res.status(400).json({ message: 'Invalid staff member' });
+      return res.status(400).json({ success: false, message: 'Invalid staff member' });
     }
 
-    ticket.assignedTo = staffId;
+    ticket.assignedToId = staffId;
     if (ticket.status === 'open') {
       ticket.status = 'in progress';
     }
     await ticket.save();
 
-    const populated = await Ticket.findById(ticket._id)
-      .populate('student', 'name email yearOfStudy school admissionNumber dob course')
-      .populate('assignedTo', 'name email')
-      .exec();
+    const populated = await Ticket.findByPk(ticket.id, {
+      include: [
+        {
+          model: User,
+          as: 'student',
+          attributes: ['id', 'name', 'email', 'yearOfStudy', 'school', 'admissionNumber', 'dob', 'course'],
+        },
+        {
+          model: User,
+          as: 'assignedTo',
+          attributes: ['id', 'name', 'email'],
+        },
+      ],
+    });
 
-    res.json(populated);
+    res.json({ success: true, data: populated });
   } catch (err) {
     next(err);
   }

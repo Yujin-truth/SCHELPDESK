@@ -1,10 +1,36 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
 
-const auditLogSchema = new mongoose.Schema({
-  action: { type: String, required: true }, // e.g., 'download', 'acknowledge'
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  resource: { type: String, required: true }, // e.g., 'Student_Handbook.pdf', 'handbook'
-  timestamp: { type: Date, default: Date.now },
-});
+module.exports = (sequelize) => {
+  const AuditLog = sequelize.define('AuditLog', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    action: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    userId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'Users',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
+    },
+    resource: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    timestamp: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+  }, {
+    timestamps: false,
+  });
 
-module.exports = mongoose.model('AuditLog', auditLogSchema);
+  return AuditLog;
+};

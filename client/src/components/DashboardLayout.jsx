@@ -3,11 +3,10 @@ import Sidebar from './Sidebar';
 
 export default function DashboardLayout({ children }) {
   return (
-    <div className="dashboard">
-      <Sidebar />
-      <div className="dashboard__content">
+    <div className="dashboard-layout">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <TopBar />
-        <main className="dashboard__main">{children}</main>
+        <main className="main-content">{children}</main>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 const express = require('express');
-const Handbook = require('../models/Handbook');
+const { Handbook } = require('../models');
+const { Op } = require('sequelize');
 const { protect, requireRole } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -8,21 +9,24 @@ const router = express.Router();
 router.get('/', protect, async (req, res, next) => {
   try {
     const { category, search } = req.query;
-    let query = {};
+    let where = {};
 
     if (category) {
-      query.category = category;
+      where.category = category;
     }
 
     if (search) {
-      query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { content: { $regex: search, $options: 'i' } },
+      where[Op.or] = [
+        { title: { [Op.iLike]: `%${search}%` } },
+        { content: { [Op.iLike]: `%${search}%` } },
       ];
     }
 
-    const handbooks = await Handbook.find(query).sort({ createdAt: -1 });
-    res.json(handbooks);
+    const handbooks = await Handbook.findAll({
+      where,
+      order: [['createdAt', 'DESC']],
+    });
+    res.json({ success: true, data: handbooks });
   } catch (err) {
     next(err);
   }
@@ -31,11 +35,11 @@ router.get('/', protect, async (req, res, next) => {
 // Get handbook by ID
 router.get('/:id', protect, async (req, res, next) => {
   try {
-    const handbook = await Handbook.findById(req.params.id);
+    const handbook = await Handbook.findByPk(req.params.id);
     if (!handbook) {
-      return res.status(404).json({ message: 'Handbook entry not found' });
+      return res.status(404).json({ success: false, message: 'Handbook entry not found' });
     }
-    res.json(handbook);
+    res.json({ success: true, data: handbook });
   } catch (err) {
     next(err);
   }
@@ -46,11 +50,11 @@ router.post('/', protect, requireRole('admin'), async (req, res, next) => {
   try {
     const { title, category, content } = req.body;
     if (!title || !category || !content) {
-      return res.status(400).json({ message: 'Title, category, and content are required' });
+      return res.status(400).json({ success: false, message: 'Title, category, and content are required' });
     }
 
     const handbook = await Handbook.create({ title, category, content });
-    res.status(201).json(handbook);
+    res.status(201).json({ success: true, data: handbook });
   } catch (err) {
     next(err);
   }
@@ -60,15 +64,12 @@ router.post('/', protect, requireRole('admin'), async (req, res, next) => {
 router.put('/:id', protect, requireRole('admin'), async (req, res, next) => {
   try {
     const { title, category, content } = req.body;
-    const handbook = await Handbook.findByIdAndUpdate(
-      req.params.id,
-      { title, category, content },
-      { new: true, runValidators: true }
-    );
+    const handbook = await Handbook.findByPk(req.params.id);
     if (!handbook) {
-      return res.status(404).json({ message: 'Handbook entry not found' });
+      return res.status(404).json({ success: false, message: 'Handbook entry not found' });
     }
-    res.json(handbook);
+    await handbook.update({ title, category, content });
+    res.json({ success: true, data: handbook });
   } catch (err) {
     next(err);
   }
@@ -77,11 +78,12 @@ router.put('/:id', protect, requireRole('admin'), async (req, res, next) => {
 // Delete handbook entry (admin only)
 router.delete('/:id', protect, requireRole('admin'), async (req, res, next) => {
   try {
-    const handbook = await Handbook.findByIdAndDelete(req.params.id);
+    const handbook = await Handbook.findByPk(req.params.id);
     if (!handbook) {
-      return res.status(404).json({ message: 'Handbook entry not found' });
+      return res.status(404).json({ success: false, message: 'Handbook entry not found' });
     }
-    res.json({ message: 'Handbook entry deleted' });
+    await handbook.destroy();
+    res.json({ success: true, message: 'Handbook entry deleted' });
   } catch (err) {
     next(err);
   }

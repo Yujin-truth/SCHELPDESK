@@ -29,7 +29,7 @@ export default function AnnouncementsWidget() {
         <p>No announcements yet.</p>
       ) : (
         announcements.map(ann => (
-          <div key={ann._id} className="announcement">
+          <div key={ann.id} className="announcement">
             <h5>{ann.title}</h5>
             <p>{ann.message}</p>
             <small>By {ann.createdBy?.name} • {new Date(ann.createdAt).toLocaleDateString()}</small>

@@ -1,25 +1,33 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
 
-const handbookSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  category: {
-    type: String,
-    required: true,
-    enum: ['Academic Policies', 'Examination Rules', 'Hostel Regulations', 'ICT Policy', 'Code of Conduct'],
-    trim: true,
-  },
-  content: {
-    type: String,
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+module.exports = (sequelize) => {
+  const Handbook = sequelize.define('Handbook', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    category: {
+      type: DataTypes.ENUM(
+        'Academic Policies',
+        'Examination Rules',
+        'Hostel Regulations',
+        'ICT Policy',
+        'Code of Conduct'
+      ),
+      allowNull: false,
+    },
+    content: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+  }, {
+    timestamps: true,
+  });
 
-module.exports = mongoose.model('Handbook', handbookSchema);
+  return Handbook;
+};

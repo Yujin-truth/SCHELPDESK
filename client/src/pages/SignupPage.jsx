@@ -55,129 +55,141 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="student-login-page">
-      <div className="student-login-container">
-        <div className="student-login-left">
-          <div className="student-login-illustration">
-            <div className="illustration-content">
-              <div className="university-icon">🎓</div>
-              <h2>Join Our Community!</h2>
-              <p>Create your student account and get access to our comprehensive support system</p>
+    <div className="auth-page">
+      <div className="auth-container signup-container">
+        <div className="auth-panel">
+          <div className="auth-header">
+            <Link to="/login" className="back-button">← Back to Login</Link>
+            <div>
+              <h1>Create Account</h1>
+              <p className="auth-subtitle">Join our support system today</p>
             </div>
           </div>
-        </div>
 
-        <div className="student-login-right">
-          <div className="student-login-form-container">
-            <div className="student-login-header">
-              <div className="student-login-title">
-                <h1>Create Account</h1>
-                <p>Join UNIASSIST today</p>
+          <form onSubmit={handleSubmit} className="auth-form signup-form">
+            <fieldset className="form-section">
+              <legend className="section-title">Personal Information</legend>
+              <div className="form-group">
+                <label htmlFor="name">Full Name *</label>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="Enter your full name"
+                  required
+                />
               </div>
+
+              <div className="form-group">
+                <label htmlFor="email">Email Address *</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="your.email@university.edu"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="password">Password *</label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="Create a strong password (min. 8 characters)"
+                  required
+                />
+                <small className="form-hint">Minimum 8 characters with uppercase, lowercase, number, and special character</small>
+              </div>
+            </fieldset>
+
+            <fieldset className="form-section">
+              <legend className="section-title">Academic Information</legend>
+              <div className="form-group">
+                <label htmlFor="admissionNumber">Admission Number</label>
+                <input
+                  id="admissionNumber"
+                  name="admissionNumber"
+                  type="text"
+                  value={form.admissionNumber}
+                  onChange={handleChange}
+                  placeholder="Your admission number"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="school">School/Faculty</label>
+                <input
+                  id="school"
+                  name="school"
+                  type="text"
+                  value={form.school}
+                  onChange={handleChange}
+                  placeholder="e.g., School of Engineering"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="course">Course/Program</label>
+                <input
+                  id="course"
+                  name="course"
+                  type="text"
+                  value={form.course}
+                  onChange={handleChange}
+                  placeholder="e.g., Computer Science"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="yearOfStudy">Year of Study</label>
+                <select
+                  id="yearOfStudy"
+                  name="yearOfStudy"
+                  value={form.yearOfStudy}
+                  onChange={handleChange}
+                >
+                  <option value="">Select year</option>
+                  <option value="1">Year 1</option>
+                  <option value="2">Year 2</option>
+                  <option value="3">Year 3</option>
+                  <option value="4">Year 4</option>
+                  <option value="5">Year 5+</option>
+                </select>
+              </div>
+            </fieldset>
+
+            <fieldset className="form-section">
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={form.acknowledgedHandbook}
+                    onChange={(e) => setForm({ ...form, acknowledgedHandbook: e.target.checked })}
+                    required
+                  />
+                  <span>I have read and agree to the university handbook and policies</span>
+                </label>
+              </div>
+            </fieldset>
+
+            {error && <div className="auth-error">{error}</div>}
+
+            <button type="submit" className="auth-btn" disabled={loading}>
+              {loading ? 'Creating Account...' : 'Create Account'}
+            </button>
+
+            <div className="auth-footer">
+              <p>Already have an account? <Link to="/login" className="link">Sign in</Link></p>
             </div>
-
-            <form onSubmit={handleSubmit} className="student-login-form">
-              <div className="form-section">
-                <h3 className="section-title">Personal Information</h3>
-                <div className="form-group">
-                  <label htmlFor="name">Full Name *</label>
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    value={form.name}
-                    onChange={handleChange}
-                    placeholder="Enter your full name"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="email">Email Address *</label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    placeholder="your.email@university.edu"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="password">Password *</label>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={form.password}
-                    onChange={handleChange}
-                    placeholder="Create a strong password"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="form-section">
-                <h3 className="section-title">Academic Information</h3>
-                <div className="form-group">
-                  <label htmlFor="admissionNumber">Admission Number</label>
-                  <input
-                    id="admissionNumber"
-                    name="admissionNumber"
-                    type="text"
-                    value={form.admissionNumber}
-                    onChange={handleChange}
-                    placeholder="Your admission number"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="course">Course/Program</label>
-                  <input
-                    id="course"
-                    name="course"
-                    type="text"
-                    value={form.course}
-                    onChange={handleChange}
-                    placeholder="e.g., Computer Science"
-                  />
-                </div>
-              </div>
-
-              <div className="form-section">
-                <div className="acknowledgment-section">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={form.acknowledgedHandbook}
-                      onChange={(e) => setForm({ ...form, acknowledgedHandbook: e.target.checked })}
-                      required
-                    />
-                    <span className="checkbox-text">
-                      I have read and understood the university handbook and agree to abide by all university policies.
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-              {error && (
-                <div className="student-error-message">
-                  <span className="error-icon">⚠️</span>
-                  {error}
-                </div>
-              )}
-
-              <button type="submit" className="student-login-btn" disabled={loading}>
-                {loading ? 'Creating Account...' : 'Create Account'}
-              </button>
-
-              <div className="student-login-footer">
-                <p>Already have an account? <Link to="/login" className="signup-link">Sign in</Link></p>
-              </div>
-            </form>
-          </div>
+          </form>
         </div>
       </div>
     </div>

@@ -1,58 +1,58 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
 
-const userSchema = new mongoose.Schema(
-  {
+module.exports = (sequelize) => {
+  const User = sequelize.define('User', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
     name: {
-      type: String,
-      required: true,
-      trim: true,
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     email: {
-      type: String,
-      required: true,
+      type: DataTypes.STRING,
+      allowNull: false,
       unique: true,
-      trim: true,
       lowercase: true,
+      validate: {
+        isEmail: true,
+      },
     },
     password: {
-      type: String,
-      required: true,
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     role: {
-      type: String,
-      enum: ['student', 'staff', 'admin'],
-      default: 'student',
+      type: DataTypes.ENUM('student', 'staff', 'admin'),
+      defaultValue: 'student',
     },
     yearOfStudy: {
-      type: String,
-      trim: true,
+      type: DataTypes.STRING,
     },
     admissionNumber: {
-      type: String,
-      trim: true,
+      type: DataTypes.STRING,
     },
     dob: {
-      type: Date,
+      type: DataTypes.DATE,
     },
     course: {
-      type: String,
-      trim: true,
+      type: DataTypes.STRING,
     },
     photo: {
-      type: String,
+      type: DataTypes.STRING,
     },
     acknowledgedHandbook: {
-      type: Boolean,
-      default: false,
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
     school: {
-      type: String,
-      trim: true,
+      type: DataTypes.STRING,
     },
-  },
-  {
+  }, {
     timestamps: true,
-  }
-);
+  });
 
-module.exports = mongoose.model('User', userSchema);
+  return User;
+};

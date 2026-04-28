@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import API from '../services/api';
 
 export default function Chatbot({ isOpen, onClose }) {
@@ -21,6 +22,18 @@ export default function Chatbot({ isOpen, onClose }) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Manage body scroll when chatbot is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('chatbot-open');
+      document.documentElement.style.overflow = 'hidden';
+      return () => {
+        document.body.classList.remove('chatbot-open');
+        document.documentElement.style.overflow = '';
+      };
+    }
+  }, [isOpen]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -77,9 +90,17 @@ export default function Chatbot({ isOpen, onClose }) {
     window.location.href = '/student?tab=tickets&action=create';
   };
 
+  const formatMessage = (content) => {
+    // Convert markdown-like formatting to HTML
+    let html = content
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+    return html;
+  };
+
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="chatbot-overlay" onClick={onClose}>
       <div className="chatbot-container" onClick={e => e.stopPropagation()}>
         <div className="chatbot-header">
@@ -105,7 +126,7 @@ export default function Chatbot({ isOpen, onClose }) {
                   </div>
                 )}
                 <div className="message-text">
-                  <div dangerouslySetInnerHTML={{ __html: message.content.replace(/\n/g, '<br>') }} />
+                  <div dangerouslySetInnerHTML={{ __html: formatMessage(message.content) }} />
                   {message.confidence && (
                     <div className="confidence-indicator">
                       Confidence: {Math.round(message.confidence * 100)}%
@@ -155,6 +176,7 @@ export default function Chatbot({ isOpen, onClose }) {
         <form className="chatbot-input" onSubmit={handleSendMessage}>
           <input
             type="text"
+            color='black'
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Ask me anything about university services..."
@@ -171,6 +193,7 @@ export default function Chatbot({ isOpen, onClose }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -91,17 +91,17 @@ export default function HandbookPage() {
               <p>No handbook entries found.</p>
             ) : (
               handbooks.map((handbook) => {
-                const expanded = expandedId === handbook._id;
+                const expanded = expandedId === handbook.id;
 
                 return (
                   <div
-                    key={handbook._id}
+                    key={handbook.id}
                     className={`handbook__item ${expanded ? 'expanded' : ''}`}
                   >
                     <button
                       type="button"
                       className="handbook__item-header"
-                      onClick={() => toggleExpand(handbook._id)}
+                      onClick={() => toggleExpand(handbook.id)}
                     >
                       <div>
                         <h3>{handbook.title}</h3>

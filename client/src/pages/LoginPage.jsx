@@ -4,10 +4,15 @@ import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
-  const [userType, setUserType] = useState(null); // null, 'student', 'staff'
+  const [userType, setUserType] = useState('student');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotMessage, setForgotMessage] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -16,11 +21,14 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const res = await API.post('/auth/login', { email, password });
+      const res = await API.post('/auth/login', {
+        email,
+        password
+      });
+
       const user = res.data.user;
       const role = user?.role;
 
-      // Validate that the user type matches their role
       if (userType === 'staff' && !['admin', 'staff'].includes(role)) {
         setError('Access denied. This login is for administrators and staff only.');
         return;
@@ -33,10 +41,10 @@ export default function LoginPage() {
 
       login(res.data);
 
-      if (role === 'staff') {
-        navigate('/staff');
-      } else if (role === 'admin') {
+      if (role === 'admin') {
         navigate('/admin');
+      } else if (role === 'staff') {
+        navigate('/staff');
       } else {
         navigate('/student');
       }
@@ -45,188 +53,238 @@ export default function LoginPage() {
     }
   };
 
-  const handleBack = () => {
-    setUserType(null);
-    setEmail('');
-    setPassword('');
-    setError('');
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+
+    try {
+      setForgotMessage('');
+
+      await API.post('/auth/forgot-password-request', {
+        email: forgotEmail
+      });
+
+      setForgotMessage(
+        'Password reset request sent successfully. Admin has been notified.'
+      );
+
+      setForgotEmail('');
+    } catch (err) {
+      setForgotMessage(
+        err.response?.data?.message || 'Failed to send request'
+      );
+    }
   };
 
-  if (userType === 'student') {
-    return (
-      <div className="student-login-page">
-        <div className="student-login-container">
-          <div className="student-login-left">
-            <div className="student-login-illustration">
-              <div className="illustration-content">
-                <div className="university-icon">🎓</div>
-                <h2>Welcome Back!</h2>
-                <p>Access your university support portal</p>
-                <div className="illustration-features">
-                  <div className="feature-item">
-                    <span className="feature-icon">📋</span>
-                    <span>Submit Support Tickets</span>
-                  </div>
-                  <div className="feature-item">
-                    <span className="feature-icon">📢</span>
-                    <span>View Announcements</span>
-                  </div>
-                  <div className="feature-item">
-                    <span className="feature-icon">📚</span>
-                    <span>Access Resources</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+  return (
+    <div className="login-landing-page">
+      <div className="login-landing-container">
+        <div className="login-landing-header">
+          <div className="landing-university-header">
+            <div className="landing-university-logo">[Y]</div>
+            <h2 className="landing-university-name">YUTA UNIVERSITY</h2>
           </div>
 
-          <div className="student-login-right">
-            <div className="student-login-form-container">
-              <div className="student-login-header">
-                <button onClick={handleBack} className="student-back-button">
-                  <span className="back-arrow">←</span>
-                  Back to Home
-                </button>
-                <div className="student-login-title">
-                  <h1>Student Login</h1>
-                  <p>Sign in to your account</p>
-                </div>
-              </div>
+          <h1>UNIASSIST</h1>
+          <p>University Help Desk & Support System</p>
+        </div>
 
-              <form onSubmit={handleSubmit} className="student-login-form">
-                <div className="form-group">
-                  <label htmlFor="student-email">Email Address</label>
-                  <div className="input-wrapper">
-                    <span className="input-icon">📧</span>
+        <div className="login-landing-content">
+          {/* Login Toggle Tabs */}
+          <div className="login-tabs">
+            <button
+              type="button"
+              className={`login-tab ${
+                userType === 'student' ? 'active student-active' : ''
+              }`}
+              onClick={() => {
+                setUserType('student');
+                setError('');
+                setShowForgotPassword(false);
+              }}
+              style={{
+                background:
+                  userType === 'student' ? '#00d4ff' : '#2a2a2a',
+                color:
+                  userType === 'student' ? '#000' : '#e0e0e0',
+                border:
+                  userType === 'student'
+                    ? '2px solid #00d4ff'
+                    : '1px solid #444'
+              }}
+            >
+              Student Login
+            </button>
+
+            <button
+              type="button"
+              className={`login-tab ${
+                userType === 'staff' ? 'active staff-active' : ''
+              }`}
+              onClick={() => {
+                setUserType('staff');
+                setError('');
+                setShowForgotPassword(false);
+              }}
+              style={{
+                background:
+                  userType === 'staff' ? '#00d4ff' : '#2a2a2a',
+                color:
+                  userType === 'staff' ? '#000' : '#e0e0e0',
+                border:
+                  userType === 'staff'
+                    ? '2px solid #00d4ff'
+                    : '1px solid #444'
+              }}
+            >
+              Admin/Staff Login
+            </button>
+          </div>
+
+          <div className="login-tabs-content">
+            <div className="tab-panel active">
+              <div
+                className={`login-option-card ${
+                  userType === 'student'
+                    ? 'student-option'
+                    : 'staff-option'
+                }`}
+              >
+                <div className="option-head">
+                  <h2>
+                    {userType === 'student'
+                      ? 'Student Portal'
+                      : 'Admin/Staff Portal'}
+                  </h2>
+
+                  <p className="option-subtitle">
+                    {userType === 'student'
+                      ? 'Access your support portal'
+                      : 'Access the administration panel'}
+                  </p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="quick-form">
+                  <div className="form-group">
+                    <label>Email Address</label>
+
                     <input
-                      id="student-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="your.email@university.edu"
+                      placeholder={
+                        userType === 'student'
+                          ? 'you@university.edu'
+                          : 'staff@university.edu'
+                      }
                       required
                     />
                   </div>
-                </div>
 
-                <div className="form-group">
-                  <label htmlFor="student-password">Password</label>
-                  <div className="input-wrapper">
-                    <span className="input-icon">🔒</span>
-                    <input
-                      id="student-password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      required
-                    />
+                  <div className="form-group">
+                    <label>Password</label>
+
+                    <div className="password-input-wrapper">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your password"
+                        required
+                      />
+
+                      <button
+                        type="button"
+                        className="password-toggle"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                {error && (
-                  <div className="student-error-message">
-                    <span className="error-icon">⚠️</span>
-                    {error}
-                  </div>
-                )}
+                  {error && <div className="auth-error">{error}</div>}
 
-                <button type="submit" className="student-login-btn">
-                  Sign In
-                </button>
+                  <button
+                    type="submit"
+                    className={`option-btn ${
+                      userType === 'student'
+                        ? 'student-option-btn'
+                        : 'staff-option-btn'
+                    }`}
+                  >
+                    Sign In
+                  </button>
 
-                <div className="student-login-footer">
-                  <p>Don't have an account? <a href="/signup" className="signup-link">Create one</a></p>
-                </div>
-              </form>
+                  {userType === 'student' && (
+                    <>
+                      <div className="forgot-password-link">
+                        <button
+                          type="button"
+                          className="forgot-btn"
+                          onClick={() =>
+                            setShowForgotPassword(!showForgotPassword)
+                          }
+                        >
+                          {showForgotPassword
+                            ? 'Close Forgot Password'
+                            : 'Forgot Password?'}
+                        </button>
+                      </div>
+
+                      {showForgotPassword && (
+                        <div className="forgot-password-box">
+                          <h4>Forgot Password Request</h4>
+
+                          <form
+                            onSubmit={handleForgotPassword}
+                            className="forgot-form"
+                          >
+                            <input
+                              type="email"
+                              placeholder="Enter your email"
+                              value={forgotEmail}
+                              onChange={(e) =>
+                                setForgotEmail(e.target.value)
+                              }
+                              required
+                            />
+
+                            <button
+                              type="submit"
+                              className="option-btn student-option-btn"
+                              style={{ marginTop: '12px' }}
+                            >
+                              Send Request
+                            </button>
+                          </form>
+
+                          {forgotMessage && (
+                            <div
+                              style={{
+                                marginTop: '12px',
+                                color: '#00d4ff',
+                                fontSize: '14px'
+                              }}
+                            >
+                              {forgotMessage}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="auth-footer">
+                        <p>
+                          Don't have an account?{' '}
+                          <Link to="/signup" className="link">
+                            Create one
+                          </Link>
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </form>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (userType === 'staff') {
-    return (
-      <div className="page">
-        <div className="login-container">
-          <div className="login-header">
-            <button onClick={handleBack} className="back-button">← Back</button>
-            <h1>Admin/Staff Login</h1>
-          </div>
-          <form onSubmit={handleSubmit} className="login-form">
-            <label>
-              Email
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                type="email"
-                placeholder="admin@university.edu or staff@university.edu"
-              />
-            </label>
-            <label>
-              Password
-              <input
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                type="password"
-                placeholder="Enter your password"
-              />
-            </label>
-            {error && <div className="error">{error}</div>}
-            <button type="submit" className="login-submit">Login as Admin/Staff</button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="page landing-page">
-      <div className="landing-container">
-        <div className="landing-header">
-          <h1 className="landing-title">Welcome to UNIASSIST</h1>
-          <p className="landing-subtitle">University Help Desk & Support System</p>
-        </div>
-
-        <div className="landing-content">
-          <div className="landing-description">
-            <h2>Get the help you need</h2>
-            <p>Access our comprehensive support system for all your university needs.</p>
-          </div>
-
-          <div className="login-options">
-            <div className="login-card student-card">
-              <div className="card-icon">🎓</div>
-              <h3>Student Portal</h3>
-              <p>Submit tickets, view announcements, access resources</p>
-              <small className="access-note">For enrolled students only</small>
-              <button
-                onClick={() => setUserType('student')}
-                className="login-option-btn student-btn"
-              >
-                Login as Student
-              </button>
-            </div>
-
-            <div className="login-card staff-card">
-              <div className="card-icon">👨‍💼</div>
-              <h3>Admin/Staff Portal</h3>
-              <p>Manage tickets, create content, oversee operations</p>
-              <small className="access-note">For administrators and staff only</small>
-              <button
-                onClick={() => setUserType('staff')}
-                className="login-option-btn staff-btn"
-              >
-                Login as Admin/Staff
-              </button>
-            </div>
-          </div>
-
-          <div className="landing-footer">
-            <p>New student? <Link to="/signup" className="signup-link">Create an account</Link></p>
           </div>
         </div>
       </div>

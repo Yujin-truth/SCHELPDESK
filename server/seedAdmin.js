@@ -1,7 +1,7 @@
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
-const connectDB = require('./config/db');
-const User = require('./models/User');
+const { connectDB, sequelize } = require('./config/db');
+const { User } = require('./models');
 
 const createAdmin = async () => {
   await connectDB();
@@ -15,22 +15,27 @@ const createAdmin = async () => {
     process.exit(1);
   }
 
-  const existing = await User.findOne({ email: adminEmail.toLowerCase() });
-  if (existing) {
-    console.log('Admin user already exists:', existing.email);
+  try {
+    const existing = await User.findOne({ where: { email: adminEmail.toLowerCase() } });
+    if (existing) {
+      console.log('Admin user already exists:', existing.email);
+      process.exit(0);
+    }
+
+    const hashed = await bcrypt.hash(adminPassword, 10);
+    const admin = await User.create({
+      name: adminName,
+      email: adminEmail.toLowerCase(),
+      password: hashed,
+      role: 'admin',
+    });
+
+    console.log('Created admin user:', admin.email);
     process.exit(0);
+  } catch (err) {
+    console.error('Error creating admin:', err);
+    process.exit(1);
   }
-
-  const hashed = await bcrypt.hash(adminPassword, 10);
-  const admin = await User.create({
-    name: adminName,
-    email: adminEmail.toLowerCase(),
-    password: hashed,
-    role: 'admin',
-  });
-
-  console.log('Created admin user:', admin.email);
-  process.exit(0);
 };
 
 createAdmin().catch((err) => {

@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { useEffect, useState } from 'react';
 import API from '../services/api';
 import DashboardLayout from '../components/DashboardLayout';
-import DashboardCards from '../components/DashboardCards';
+import '../styles/admin-dashboard.css';
 
 export default function AdminDashboard() {
   const [staffList, setStaffList] = useState([]);
@@ -17,113 +16,32 @@ export default function AdminDashboard() {
   const [announcementForm, setAnnouncementForm] = useState({ title: '', message: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeNav, setActiveNav] = useState('overview');
 
-  const stats = useMemo(() => {
-    const total = tickets.length;
-    const openCount = tickets.filter((t) => t.status === 'open').length;
-    const closedCount = tickets.filter((t) => ['resolved', 'closed'].includes(t.status)).length;
-
-    return [
-      { label: 'Total Tickets', value: total, variant: 'primary', description: 'All tickets in the system' },
-      { label: 'Open', value: openCount, variant: 'danger', description: 'Tickets needing attention' },
-      { label: 'Closed', value: closedCount, variant: 'success', description: 'Resolved or closed tickets' },
-    ];
-  }, [tickets]);
-
-  const ticketMetrics = useMemo(() => {
-    const categoryCounts = tickets.reduce((acc, ticket) => {
-      const key = ticket.category || 'Uncategorized';
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
-    }, {});
-
-    const topIssues = Object.entries(categoryCounts)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 5);
-
-    const departmentCounts = tickets.reduce((acc, ticket) => {
-      const dept = ticket.student?.school || 'Unknown';
-      acc[dept] = (acc[dept] || 0) + 1;
-      return acc;
-    }, {});
-
-    const ticketsPerDepartment = Object.entries(departmentCounts)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-
-    return {
-      topIssues,
-      ticketsPerDepartment,
-    };
-  }, [tickets]);
-
-  const fetchStaff = async () => {
+  const fetchData = async () => {
     try {
-      const res = await API.get('/admin/staff');
-      setStaffList(res.data);
+      const [staffRes, ticketsRes, handbooksRes, announcementsRes, auditRes, faqsRes] = await Promise.all([
+        API.get('/admin/staff'),
+        API.get('/admin/tickets'),
+        API.get('/handbook'),
+        API.get('/announcements'),
+        API.get('/audit'),
+        API.get('/faqs'),
+      ]);
+      setStaffList(staffRes.data.data || []);
+      setTickets(ticketsRes.data.data || []);
+      setHandbooks(handbooksRes.data.data || []);
+      setAnnouncements(announcementsRes.data.data || []);
+      setAuditLogs(auditRes.data.data || []);
+      setFaqs(faqsRes.data.data || []);
     } catch (err) {
-      setError(err.response?.data?.message || 'Unable to load staff');
-    }
-  };
-
-  const fetchTickets = async () => {
-    try {
-      const res = await API.get('/admin/tickets');
-      setTickets(res.data);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Unable to load tickets');
-    }
-  };
-
-  const fetchHandbooks = async () => {
-    try {
-      const res = await API.get('/handbook');
-      setHandbooks(res.data);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Unable to load handbooks');
-    }
-  };
-
-  const fetchAnnouncements = async () => {
-    try {
-      const res = await API.get('/announcements');
-      setAnnouncements(res.data);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Unable to load announcements');
-    }
-  };
-
-  const fetchAuditLogs = async () => {
-    try {
-      const res = await API.get('/audit');
-      setAuditLogs(res.data);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Unable to load audit logs');
-    }
-  };
-
-  const fetchFAQs = async () => {
-    try {
-      const res = await API.get('/faqs');
-      setFaqs(res.data);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Unable to load FAQs');
+      setError(err.response?.data?.message || 'Failed to load data');
     }
   };
 
   useEffect(() => {
-    fetchStaff();
-    fetchTickets();
-    fetchHandbooks();
-    fetchAnnouncements();
-    fetchAuditLogs();
-    fetchFAQs();
-    // Polling for real-time updates every 10 seconds
-    const interval = setInterval(() => {
-      fetchTickets();
-    }, 10000);
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -134,7 +52,7 @@ export default function AdminDashboard() {
     try {
       await API.post('/admin/staff', form);
       setForm({ name: '', email: '', password: '' });
-      fetchStaff();
+      await fetchData();
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to create staff');
     } finally {
@@ -149,7 +67,7 @@ export default function AdminDashboard() {
     try {
       await API.post('/handbook', handbookForm);
       setHandbookForm({ title: '', category: '', content: '' });
-      fetchHandbooks();
+      await fetchData();
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to create handbook entry');
     } finally {
@@ -164,7 +82,7 @@ export default function AdminDashboard() {
     try {
       await API.post('/announcements', announcementForm);
       setAnnouncementForm({ title: '', message: '' });
-      fetchAnnouncements();
+      await fetchData();
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to create announcement');
     } finally {
@@ -180,7 +98,7 @@ export default function AdminDashboard() {
       const keywords = faqForm.keywords ? faqForm.keywords.split(',').map(k => k.trim()) : [];
       await API.post('/faqs', { ...faqForm, keywords });
       setFaqForm({ question: '', answer: '', category: 'General Inquiry', keywords: '' });
-      fetchFAQs();
+      await fetchData();
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to create FAQ');
     } finally {
@@ -188,542 +106,362 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleToggleFAQ = async (faqId, isActive) => {
-    try {
-      await API.put(`/faqs/${faqId}`, { isActive: !isActive });
-      fetchFAQs();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Unable to update FAQ');
-    }
-  };
-
-  const handleDeleteFAQ = async (faqId) => {
-    if (!window.confirm('Are you sure you want to delete this FAQ?')) return;
-    try {
-      await API.delete(`/faqs/${faqId}`);
-      fetchFAQs();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Unable to delete FAQ');
-    }
-  };
-
   const deleteHandbook = async (id) => {
-    if (!confirm('Are you sure you want to delete this handbook entry?')) return;
-    setError('');
-    setLoading(true);
+    if (!confirm('Are you sure?')) return;
     try {
       await API.delete(`/handbook/${id}`);
-      fetchHandbooks();
+      await fetchData();
     } catch (err) {
-      setError(err.response?.data?.message || 'Unable to delete handbook entry');
-    } finally {
-      setLoading(false);
+      setError(err.response?.data?.message || 'Unable to delete');
     }
   };
 
   const deleteAnnouncement = async (id) => {
-    if (!confirm('Are you sure you want to delete this announcement?')) return;
-    setError('');
-    setLoading(true);
+    if (!confirm('Are you sure?')) return;
     try {
       await API.delete(`/announcements/${id}`);
-      fetchAnnouncements();
+      await fetchData();
     } catch (err) {
-      setError(err.response?.data?.message || 'Unable to delete announcement');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const assignTicket = async (ticketId, staffId) => {
-    setError('');
-    setLoading(true);
-    try {
-      await API.put(`/admin/tickets/${ticketId}/assign`, { staffId });
-      fetchTickets();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Unable to assign ticket');
-    } finally {
-      setLoading(false);
+      setError(err.response?.data?.message || 'Unable to delete');
     }
   };
 
   return (
     <DashboardLayout>
-      <div className="dashboard__header">
-        <div>
-          <h2>Admin Dashboard</h2>
-          <p className="dashboard__subheading">Manage staff, tickets, and system content</p>
+      <div className="admin-dashboard">
+        {/* Left Navigation */}
+        <div className="admin-nav">
+          <nav className="nav-menu">
+            <button className={`nav-item ${activeNav === 'overview' ? 'active' : ''}`} onClick={() => setActiveNav('overview')}>
+              📊 Overview
+            </button>
+            <button className={`nav-item ${activeNav === 'staff' ? 'active' : ''}`} onClick={() => setActiveNav('staff')}>
+              👥 Staff
+            </button>
+            <button className={`nav-item ${activeNav === 'tickets' ? 'active' : ''}`} onClick={() => setActiveNav('tickets')}>
+              Tickets
+            </button>
+            <button className={`nav-item ${activeNav === 'handbook' ? 'active' : ''}`} onClick={() => setActiveNav('handbook')}>
+              📖 Handbook
+            </button>
+            <button className={`nav-item ${activeNav === 'announcements' ? 'active' : ''}`} onClick={() => setActiveNav('announcements')}>
+              📢 Announcements
+            </button>
+            <button className={`nav-item ${activeNav === 'faq' ? 'active' : ''}`} onClick={() => setActiveNav('faq')}>
+              ❓ FAQ
+            </button>
+            <button className={`nav-item ${activeNav === 'audit' ? 'active' : ''}`} onClick={() => setActiveNav('audit')}>
+              🔍 Audit Log
+            </button>
+          </nav>
         </div>
-      </div>
 
-      <nav className="dashboard-nav">
-        <button
-          className={`dashboard-nav__tab ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveTab('overview')}
-        >
-          Overview
-        </button>
-        <button
-          className={`dashboard-nav__tab ${activeTab === 'staff' ? 'active' : ''}`}
-          onClick={() => setActiveTab('staff')}
-        >
-          Staff
-        </button>
-        <button
-          className={`dashboard-nav__tab ${activeTab === 'tickets' ? 'active' : ''}`}
-          onClick={() => setActiveTab('tickets')}
-        >
-          Tickets
-        </button>
-        <button
-          className={`dashboard-nav__tab ${activeTab === 'content' ? 'active' : ''}`}
-          onClick={() => setActiveTab('content')}
-        >
-          Content
-        </button>
-        <button
-          className={`dashboard-nav__tab ${activeTab === 'audit' ? 'active' : ''}`}
-          onClick={() => setActiveTab('audit')}
-        >
-          Audit
-        </button>
-        <button
-          className={`dashboard-nav__tab ${activeTab === 'faq' ? 'active' : ''}`}
-          onClick={() => setActiveTab('faq')}
-        >
-          FAQ
-        </button>
-      </nav>
+        {/* Main Content */}
+        <div className="admin-main">
+          <div className="admin-content-header">
+            <h1>{activeNav.charAt(0).toUpperCase() + activeNav.slice(1)}</h1>
+            <p className="admin-breadcrumb">Dashboard / {activeNav.charAt(0).toUpperCase() + activeNav.slice(1)}</p>
+          </div>
 
-      {activeTab === 'overview' && (
-        <>
-          <DashboardCards stats={stats} />
+          {error && <div className="admin-alert error">{error}</div>}
 
-          <section className="dashboard-card">
-            <h2 className="card-title">Tickets Summary</h2>
-            <div className="chart-grid">
-              <div className="chart-card">
-                <h3 className="chart-title">Top Issues</h3>
-                {ticketMetrics.topIssues.length === 0 ? (
-                  <p>No tickets yet.</p>
-                ) : (
-                  <ResponsiveContainer width="100%" height={240}>
-                    <PieChart>
-                      <Pie
-                        data={ticketMetrics.topIssues}
-                        dataKey="value"
-                        nameKey="name"
-                        outerRadius={90}
-                        fill="#3b82f6"
-                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                      >
-                        {ticketMetrics.topIssues.map((entry, index) => (
-                          <Cell
-                            key={`cell-${entry.name}`}
-                            fill={["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#6366f1"][
-                              index % 5
-                            ]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend verticalAlign="bottom" />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
+          {/* Overview */}
+          {activeNav === 'overview' && (
+            <div className="admin-content">
+              <div className="stats-row">
+                <div className="stat-card">
+                  <div className="stat-icon">👥</div>
+                  <div className="stat-info">
+                    <div className="stat-label">Total Staff</div>
+                    <div className="stat-value">{staffList.length}</div>
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-icon">📊</div>
+                  <div className="stat-info">
+                    <div className="stat-label">Total Tickets</div>
+                    <div className="stat-value">{tickets.length}</div>
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-icon">📖</div>
+                  <div className="stat-info">
+                    <div className="stat-label">Handbooks</div>
+                    <div className="stat-value">{handbooks.length}</div>
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-icon">📢</div>
+                  <div className="stat-info">
+                    <div className="stat-label">Announcements</div>
+                    <div className="stat-value">{announcements.length}</div>
+                  </div>
+                </div>
               </div>
 
-              <div className="chart-card">
-                <h3 className="chart-title">Tickets per Department</h3>
-                {ticketMetrics.ticketsPerDepartment.length === 0 ? (
-                  <p>No tickets yet.</p>
-                ) : (
-                  <ResponsiveContainer width="100%" height={240}>
-                    <BarChart data={ticketMetrics.ticketsPerDepartment} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <YAxis allowDecimals={false} />
-                      <Tooltip />
-                      <Bar dataKey="value" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
+              <div className="info-section">
+                <h3>System Information</h3>
+                <div className="info-grid">
+                  <div className="info-item">
+                    <span className="info-label">FAQs Created:</span>
+                    <span className="info-value">{faqs.length}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Audit Logs:</span>
+                    <span className="info-value">{auditLogs.length}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Open Tickets:</span>
+                    <span className="info-value">{tickets.filter(t => t.status === 'open').length}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Resolved Tickets:</span>
+                    <span className="info-value">{tickets.filter(t => t.status === 'resolved').length}</span>
+                  </div>
+                </div>
               </div>
             </div>
+          )}
 
-            <div className="top-issues-list">
-              <h3 className="chart-title">Top issues</h3>
-              <ol>
-                {ticketMetrics.topIssues.length === 0 ? (
-                  <li>No tickets yet.</li>
-                ) : (
-                  ticketMetrics.topIssues.map((issue) => (
-                    <li key={issue.name}>
-                      {issue.name} ({issue.value})
-                    </li>
-                  ))
-                )}
-              </ol>
-            </div>
-          </section>
-        </>
-      )}
+          {/* Staff */}
+          {activeNav === 'staff' && (
+            <div className="admin-content">
+              <div className="form-section">
+                <h3>Add New Staff Member</h3>
+                <form onSubmit={handleCreateStaff}>
+                  <input placeholder="Full Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                  <input placeholder="Email Address" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+                  <input placeholder="Password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+                  <button type="submit" disabled={loading}>{loading ? 'Creating...' : 'Add Staff'}</button>
+                </form>
+              </div>
 
-      {activeTab === 'staff' && (
-        <>
-          <section className="dashboard-card">
-            <h2 className="card-title">Create Staff Account</h2>
-            <form onSubmit={handleCreateStaff} className="card-form">
-              <input
-                placeholder="Name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                required
-              />
-              <input
-                placeholder="Email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                required
-                type="email"
-              />
-              <input
-                placeholder="Password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                required
-                type="password"
-              />
-              <button type="submit" disabled={loading}>
-                {loading ? 'Creating...' : 'Create Staff'}
-              </button>
-              {error && <p className="error">{error}</p>}
-            </form>
-          </section>
-
-          <section className="dashboard-card">
-            <h2 className="card-title">Staff Members</h2>
-            {staffList.length === 0 ? (
-              <p>No staff accounts yet.</p>
-            ) : (
-              <div className="table-wrapper">
-                <table className="table">
+              <div className="table-section">
+                <h3>Staff Members ({staffList.length})</h3>
+                <table className="data-table">
                   <thead>
                     <tr>
                       <th>Name</th>
                       <th>Email</th>
+                      <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {staffList.map((member) => (
-                      <tr key={member._id}>
-                        <td>{member.name}</td>
-                        <td>{member.email}</td>
+                    {staffList.map(staff => (
+                      <tr key={staff.id}>
+                        <td>{staff.name}</td>
+                        <td>{staff.email}</td>
+                        <td><span className="status-badge active">Active</span></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            )}
-          </section>
-        </>
-      )}
-
-      {activeTab === 'tickets' && (
-        <section className="dashboard-card">
-          <h2 className="card-title">Tickets</h2>
-          {tickets.length === 0 ? (
-            <p>No tickets yet.</p>
-          ) : (
-            <div className="table-wrapper">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Title</th>
-                    <th>Status</th>
-                    <th>Student</th>
-                    <th>Assigned</th>
-                    <th>Assign</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tickets.map((ticket) => (
-                    <tr key={ticket._id}>
-                      <td className="mono">{ticket._id}</td>
-                      <td>{ticket.title}</td>
-                      <td>{ticket.status}</td>
-                      <td>{ticket.student?.name || 'Unknown'}</td>
-                      <td>{ticket.assignedTo?.name || 'Unassigned'}</td>
-                      <td>
-                        <select
-                          value={ticket.assignedTo?._id || ''}
-                          onChange={(e) => assignTicket(ticket._id, e.target.value)}
-                          disabled={loading}
-                        >
-                          <option value="">Unassigned</option>
-                          {staffList.map((staff) => (
-                            <option key={staff._id} value={staff._id}>
-                              {staff.name}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           )}
-        </section>
-      )}
 
-      {activeTab === 'content' && (
-        <>
-          <section className="dashboard-card">
-            <h2 className="card-title">Create Handbook Entry</h2>
-            <form onSubmit={handleCreateHandbook} className="card-form">
-              <input
-                placeholder="Title"
-                value={handbookForm.title}
-                onChange={(e) => setHandbookForm({ ...handbookForm, title: e.target.value })}
-                required
-              />
-              <input
-                placeholder="Category"
-                value={handbookForm.category}
-                onChange={(e) => setHandbookForm({ ...handbookForm, category: e.target.value })}
-                required
-              />
-              <textarea
-                placeholder="Content"
-                value={handbookForm.content}
-                onChange={(e) => setHandbookForm({ ...handbookForm, content: e.target.value })}
-                required
-                rows="4"
-              />
-              <button type="submit" disabled={loading}>
-                {loading ? 'Creating...' : 'Create Entry'}
-              </button>
-            </form>
-          </section>
+          {/* Tickets */}
+          {activeNav === 'tickets' && (
+            <div className="admin-content">
+              <div className="table-section">
+                <h3>All Tickets ({tickets.length})</h3>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Student</th>
+                      <th>Status</th>
+                      <th>Assigned</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tickets.map(ticket => (
+                      <tr key={ticket.id}>
+                        <td>{ticket.title}</td>
+                        <td>{ticket.student?.name || '—'}</td>
+                        <td><span className={`status-badge ${ticket.status}`}>{ticket.status}</span></td>
+                        <td>{ticket.assignedTo?.name || 'Unassigned'}</td>
 
-          <section className="dashboard-card">
-            <h2 className="card-title">Handbook Entries</h2>
-            {handbooks.length === 0 ? (
-              <p>No handbook entries yet.</p>
-            ) : (
-              <div className="table-wrapper">
-                <table className="table">
+<td>
+  {!ticket.assignedTo && (
+    <select
+      onChange={async (e) => {
+        const staffId = e.target.value;
+
+        if (!staffId) return;
+
+        try {
+          await API.put(`/tickets/${ticket.id}/assign`, {
+            assignedToId: staffId
+          });
+
+          fetchData();
+        } catch (err) {
+          setError('Failed to assign ticket');
+        }
+      }}
+    >
+      <option value="">Assign Staff</option>
+
+      {staffList.map((staff) => (
+        <option key={staff.id} value={staff.id}>
+          {staff.name}
+        </option>
+      ))}
+    </select>
+  )}
+</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Handbook */}
+          {activeNav === 'handbook' && (
+            <div className="admin-content">
+              <div className="form-section">
+                <h3>Add Handbook Entry</h3>
+                <form onSubmit={handleCreateHandbook}>
+                  <input placeholder="Title" value={handbookForm.title} onChange={(e) => setHandbookForm({ ...handbookForm, title: e.target.value })} required />
+                  <input placeholder="Category" value={handbookForm.category} onChange={(e) => setHandbookForm({ ...handbookForm, category: e.target.value })} required />
+                  <textarea placeholder="Content" value={handbookForm.content} onChange={(e) => setHandbookForm({ ...handbookForm, content: e.target.value })} required rows="4" />
+                  <button type="submit" disabled={loading}>{loading ? 'Creating...' : 'Add Entry'}</button>
+                </form>
+              </div>
+
+              <div className="table-section">
+                <h3>Handbook Entries ({handbooks.length})</h3>
+                <table className="data-table">
                   <thead>
                     <tr>
                       <th>Title</th>
                       <th>Category</th>
-                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {handbooks.map((entry) => (
-                      <tr key={entry._id}>
+                    {handbooks.map(entry => (
+                      <tr key={entry.id}>
                         <td>{entry.title}</td>
                         <td>{entry.category}</td>
-                        <td>
-                          <button onClick={() => deleteHandbook(entry._id)} disabled={loading}>
-                            Delete
-                          </button>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            )}
-          </section>
+            </div>
+          )}
 
-          <section className="dashboard-card">
-            <h2 className="card-title">Create Announcement</h2>
-            <form onSubmit={handleCreateAnnouncement} className="card-form">
-              <input
-                placeholder="Title"
-                value={announcementForm.title}
-                onChange={(e) => setAnnouncementForm({ ...announcementForm, title: e.target.value })}
-                required
-              />
-              <textarea
-                placeholder="Message"
-                value={announcementForm.message}
-                onChange={(e) => setAnnouncementForm({ ...announcementForm, message: e.target.value })}
-                required
-                rows="3"
-              />
-              <button type="submit" disabled={loading}>
-                {loading ? 'Creating...' : 'Create Announcement'}
-              </button>
-            </form>
-          </section>
+          {/* Announcements */}
+          {activeNav === 'announcements' && (
+            <div className="admin-content">
+              <div className="form-section">
+                <h3>Create Announcement</h3>
+                <form onSubmit={handleCreateAnnouncement}>
+                  <input placeholder="Title" value={announcementForm.title} onChange={(e) => setAnnouncementForm({ ...announcementForm, title: e.target.value })} required />
+                  <textarea placeholder="Message" value={announcementForm.message} onChange={(e) => setAnnouncementForm({ ...announcementForm, message: e.target.value })} required rows="4" />
+                  <button type="submit" disabled={loading}>{loading ? 'Creating...' : 'Post Announcement'}</button>
+                </form>
+              </div>
 
-          <section className="dashboard-card">
-            <h2 className="card-title">Announcements</h2>
-            {announcements.length === 0 ? (
-              <p>No announcements yet.</p>
-            ) : (
-              <div className="table-wrapper">
-                <table className="table">
+              <div className="table-section">
+                <h3>Recent Announcements ({announcements.length})</h3>
+                <table className="data-table">
                   <thead>
                     <tr>
                       <th>Title</th>
                       <th>Created By</th>
-                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {announcements.map((ann) => (
-                      <tr key={ann._id}>
+                    {announcements.map(ann => (
+                      <tr key={ann.id}>
                         <td>{ann.title}</td>
-                        <td>{ann.createdBy?.name || 'Unknown'}</td>
-                        <td>
-                          <button onClick={() => deleteAnnouncement(ann._id)} disabled={loading}>
-                            Delete
-                          </button>
-                        </td>
+                        <td>{ann.createdBy?.name || '—'}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            )}
-          </section>
-        </>
-      )}
-
-      {activeTab === 'audit' && (
-        <section className="dashboard-card">
-          <h2 className="card-title">Audit Logs</h2>
-          {auditLogs.length === 0 ? (
-            <p>No audit logs yet.</p>
-          ) : (
-            <div className="table-wrapper">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>User</th>
-                    <th>Action</th>
-                    <th>Resource</th>
-                    <th>Timestamp</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {auditLogs.map((log) => (
-                    <tr key={log._id}>
-                      <td>{log.user?.name || 'Unknown'}</td>
-                      <td>{log.action}</td>
-                      <td>{log.resource}</td>
-                      <td>{new Date(log.timestamp).toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           )}
-        </section>
-      )}
 
-      {activeTab === 'faq' && (
-        <>
-          <section className="dashboard-card">
-            <h2 className="card-title">Create FAQ</h2>
-            <form onSubmit={handleCreateFAQ} className="card-form">
-              <input
-                placeholder="Question"
-                value={faqForm.question}
-                onChange={(e) => setFaqForm({ ...faqForm, question: e.target.value })}
-                required
-              />
-              <select
-                value={faqForm.category}
-                onChange={(e) => setFaqForm({ ...faqForm, category: e.target.value })}
-                required
-              >
-                <option value="General Inquiry">General Inquiry</option>
-                <option value="ICT Support">ICT Support</option>
-                <option value="Hostel Maintenance">Hostel Maintenance</option>
-                <option value="Academic Affairs">Academic Affairs</option>
-                <option value="Finance Office">Finance Office</option>
-                <option value="Examinations">Examinations</option>
-                <option value="Registration">Registration</option>
-              </select>
-              <textarea
-                placeholder="Answer"
-                value={faqForm.answer}
-                onChange={(e) => setFaqForm({ ...faqForm, answer: e.target.value })}
-                required
-                rows="4"
-              />
-              <input
-                placeholder="Keywords (comma-separated)"
-                value={faqForm.keywords}
-                onChange={(e) => setFaqForm({ ...faqForm, keywords: e.target.value })}
-              />
-              <button type="submit" disabled={loading}>
-                {loading ? 'Creating...' : 'Create FAQ'}
-              </button>
-            </form>
-          </section>
+          {/* FAQ */}
+          {activeNav === 'faq' && (
+            <div className="admin-content">
+              <div className="form-section">
+                <h3>Create FAQ</h3>
+                <form onSubmit={handleCreateFAQ}>
+                  <input placeholder="Question" value={faqForm.question} onChange={(e) => setFaqForm({ ...faqForm, question: e.target.value })} required />
+                  <select value={faqForm.category} onChange={(e) => setFaqForm({ ...faqForm, category: e.target.value })} required>
+                    <option value="General Inquiry">General Inquiry</option>
+                    <option value="ICT Support">ICT Support</option>
+                    <option value="Hostel Maintenance">Hostel Maintenance</option>
+                    <option value="Academic Affairs">Academic Affairs</option>
+                  </select>
+                  <textarea placeholder="Answer" value={faqForm.answer} onChange={(e) => setFaqForm({ ...faqForm, answer: e.target.value })} required rows="4" />
+                  <input placeholder="Keywords (comma-separated)" value={faqForm.keywords} onChange={(e) => setFaqForm({ ...faqForm, keywords: e.target.value })} />
+                  <button type="submit" disabled={loading}>{loading ? 'Creating...' : 'Create FAQ'}</button>
+                </form>
+              </div>
 
-          <section className="dashboard-card">
-            <h2 className="card-title">FAQ Management</h2>
-            {faqs.length === 0 ? (
-              <p>No FAQs yet.</p>
-            ) : (
-              <div className="table-wrapper">
-                <table className="table">
+              <div className="table-section">
+                <h3>FAQ Management ({faqs.length})</h3>
+                <table className="data-table">
                   <thead>
                     <tr>
                       <th>Question</th>
                       <th>Category</th>
                       <th>Status</th>
-                      <th>Usage</th>
-                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {faqs.map((faq) => (
-                      <tr key={faq._id}>
+                    {faqs.map(faq => (
+                      <tr key={faq.id}>
                         <td>{faq.question}</td>
                         <td>{faq.category}</td>
-                        <td>
-                          <span className={`status ${faq.isActive ? 'status--success' : 'status--danger'}`}>
-                            {faq.isActive ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        <td>{faq.usageCount}</td>
-                        <td>
-                          <button
-                            onClick={() => handleToggleFAQ(faq._id, faq.isActive)}
-                            disabled={loading}
-                            className="btn-small"
-                          >
-                            {faq.isActive ? 'Deactivate' : 'Activate'}
-                          </button>
-                          <button
-                            onClick={() => handleDeleteFAQ(faq._id)}
-                            disabled={loading}
-                            className="btn-small btn-danger"
-                          >
-                            Delete
-                          </button>
-                        </td>
+                        <td><span className={`status-badge ${faq.isActive ? 'active' : 'inactive'}`}>{faq.isActive ? 'Active' : 'Inactive'}</span></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            )}
-          </section>
-        </>
-      )}
+            </div>
+          )}
 
-      {error && <div className="error">{error}</div>}
+          {/* Audit Log */}
+          {activeNav === 'audit' && (
+            <div className="admin-content">
+              <div className="table-section">
+                <h3>Activity Audit Log ({auditLogs.length})</h3>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Action</th>
+                      <th>Resource</th>
+                      <th>Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditLogs.map(log => (
+                      <tr key={log.id}>
+                        <td>{log.user?.name || '—'}</td>
+                        <td>{log.action}</td>
+                        <td>{log.resource}</td>
+                        <td>{new Date(log.timestamp).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </DashboardLayout>
   );
 }

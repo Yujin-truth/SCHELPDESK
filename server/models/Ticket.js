@@ -1,40 +1,67 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
 
-const ticketSchema = new mongoose.Schema(
-  {
+module.exports = (sequelize) => {
+  const Ticket = sequelize.define('Ticket', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
     title: {
-      type: String,
-      required: true,
-      trim: true,
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     description: {
-      type: String,
-      required: true,
+      type: DataTypes.TEXT,
+      allowNull: false,
     },
     category: {
-      type: String,
-      required: true,
-      trim: true,
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     status: {
-      type: String,
-      enum: ['open', 'in progress', 'resolved', 'closed'],
-      default: 'open',
+      type: DataTypes.ENUM('open', 'in progress', 'resolved', 'closed', 'escalated','visit office'),
+      defaultValue: 'open',
     },
-    student: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
+    priority: {
+      type: DataTypes.ENUM('low', 'medium', 'high', 'critical'),
+      defaultValue: 'medium',
     },
-    assignedTo: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      default: null,
+    urgency: {
+      type: DataTypes.INTEGER,
+      defaultValue: 5,
+      comment: 'ML-predicted urgency score 1-10'
     },
-  },
-  {
+    department: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      comment: 'Department responsible for this ticket'
+    },
+    studentId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'Users',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
+    },
+    assignedToId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'Users',
+        key: 'id',
+      },
+      onDelete: 'SET NULL',
+    },
+    resolvedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+  }, {
     timestamps: true,
-  }
-);
+  });
 
-module.exports = mongoose.model('Ticket', ticketSchema);
+  return Ticket;
+};

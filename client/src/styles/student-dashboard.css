@@ -1,0 +1,301 @@
+.student-dashboard {
+  display: flex;
+  min-height: 100vh;
+  background: #121212;
+  color: #e6e6e6;
+}
+
+.student-nav {
+  width: 220px;
+  background: rgba(28, 28, 28, 0.6);
+  backdrop-filter: blur(12px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20px 0;
+}
+
+.student-nav .nav-menu {
+  display: flex;
+  flex-direction: column;
+}
+
+.student-nav .nav-item {
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  color: #b0b0b0;
+  text-align: left;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.student-nav .nav-item:hover {
+  background: rgba(0, 212, 255, 0.08);
+  color: #00d4ff;
+}
+
+.student-nav .nav-item.active {
+  background: rgba(0, 212, 255, 0.12);
+  border-left-color: #00d4ff;
+  color: #00d4ff;
+}
+
+
+.student-main {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+}
+
+.student-content-header {
+  margin-bottom: 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 20px;
+}
+
+.student-content-header h1 {
+  font-size: 28px;
+  color: #ffffff;
+}
+
+.student-breadcrumb {
+  font-size: 12px;
+  color: #8a8a8a;
+}
+
+
+.dashboard-card {
+  background: rgba(30, 30, 30, 0.55);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  color: #e6e6e6;
+}
+
+.card-title {
+  font-size: 18px;
+  margin-bottom: 18px;
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 10px;
+}
+
+
+.dashboard__grid,
+.tickets-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+
+.card-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card-form input,
+.card-form textarea,
+.card-form select {
+  background: rgba(15, 15, 15, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-radius: 10px;
+  padding: 12px;
+  transition: 0.2s ease;
+}
+
+.card-form input:focus,
+.card-form textarea:focus,
+.card-form select:focus {
+  outline: none;
+  border-color: #00d4ff;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+}
+
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  color: #00d4ff;
+  padding: 14px;
+  text-align: left;
+}
+
+.table td {
+  padding: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ddd;
+}
+
+.table tbody tr:hover {
+  background: rgba(0, 212, 255, 0.05);
+}
+
+
+.status {
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status--open {
+  background: rgba(255, 165, 0, 0.15);
+  color: #ffb366;
+}
+
+.status--in-progress {
+  background: rgba(0, 140, 255, 0.15);
+  color: #66ccff;
+}
+
+.status--resolved {
+  background: rgba(0, 255, 120, 0.15);
+  color: #66ff99;
+}
+
+
+.profile-card {
+  background: rgba(31, 31, 31, 0.55);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+/* Profile photo */
+.profile-photo {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #00d4ff;
+}
+
+/* Profile info */
+.profile-card p {
+  color: #e0e0e0;
+  margin: 0;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-card p strong {
+  color: #00d4ff;
+}
+
+
+.profile-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* PRIMARY BUTTON */
+.settings-button {
+  background: linear-gradient(135deg, #00d4ff, #00b8d4);
+  color: #000 !important;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: inline-block;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.settings-button:hover {
+  transform: translateY(-2px);
+}
+
+/* SECONDARY BUTTON */
+.secondary-button {
+  background: rgba(0, 212, 255, 0.08);
+  color: #00d4ff !important;
+  border: 1px solid rgba(0, 212, 255, 0.6);
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.secondary-button:hover {
+  background: rgba(0, 212, 255, 0.2);
+}
+
+
+.password-section {
+  margin-top: 20px;
+  background: rgba(20, 20, 20, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 22px;
+}
+
+.password-section h3 {
+  color: #00d4ff;
+}
+
+.password-section input {
+  width: 100%;
+  background: rgba(10, 10, 10, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+/* =========================
+   CHATBOT BUTTON
+========================= */
+.chatbot-float-btn {
+  position: fixed;
+  right: 30px;
+  bottom: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #00d4ff;
+  border: none;
+  cursor: pointer;
+  font-size: 26px;
+  box-shadow: 0 6px 18px rgba(0, 212, 255, 0.35);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 1200px) {
+  .dashboard__grid,
+  .tickets-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .student-dashboard {
+    flex-direction: column;
+  }
+
+  .student-nav {
+    width: 100%;
+  }
+}

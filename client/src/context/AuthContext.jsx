@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback
+} from 'react';
 import API from '../services/api';
 
 const AuthContext = createContext(null);
@@ -17,11 +23,16 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Save auth to localStorage
   useEffect(() => {
     if (user) {
       localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('userId', user.id);
+      localStorage.setItem('userName', user.name);
     } else {
       localStorage.removeItem('user');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
     }
   }, [user]);
 
@@ -33,88 +44,131 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
-  const login = ({ token: jwt, user: u }) => {
+  const login = ({ token: jwt, user: loggedUser }) => {
     setToken(jwt);
-    setUser(u);
+    setUser(loggedUser);
   };
 
   const logout = () => {
     setToken(null);
     setUser(null);
     setTickets([]);
+
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
   };
 
   const fetchTickets = useCallback(async () => {
     if (!user) return;
+
     setLoading(true);
     setError('');
+
     try {
       const res = await API.get('/tickets');
-      setTickets(res.data);
+
+      setTickets(res.data.data || []);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load tickets');
+      console.error(err);
+
+      setError(
+        err.response?.data?.message || 'Failed to load tickets'
+      );
     } finally {
       setLoading(false);
     }
   }, [user]);
 
-  const createTicket = useCallback(async (ticketData) => {
-    setLoading(true);
-    setError('');
-    try {
-      await API.post('/tickets', ticketData);
-      fetchTickets(); // Refresh tickets
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create ticket');
-      throw err; // Re-throw for component handling
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchTickets]);
+  const createTicket = useCallback(
+    async (ticketData) => {
+      setLoading(true);
+      setError('');
 
-  const assignTicket = useCallback(async (id) => {
-    setLoading(true);
-    setError('');
-    try {
-      await API.put(`/tickets/${id}/assign`);
-      fetchTickets();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to assign ticket');
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchTickets]);
+      try {
+        await API.post('/tickets', ticketData);
 
-  const updateTicketStatus = useCallback(async (id, status) => {
-    setLoading(true);
-    setError('');
-    try {
-      await API.put(`/tickets/${id}/status`, { status });
-      fetchTickets();
-      // Simulate email notification
-      alert(`Email notification sent to student: Ticket status updated to ${status}`);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update status');
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchTickets]);
+        await fetchTickets();
+      } catch (err) {
+        console.error(err);
+
+        setError(
+          err.response?.data?.message || 'Failed to create ticket'
+        );
+
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchTickets]
+  );
+
+  // FIXED CLAIM ROUTE
+  const assignTicket = useCallback(
+    async (id) => {
+      setLoading(true);
+      setError('');
+
+      try {
+        await API.put(`/tickets/${id}/claim`);
+
+        await fetchTickets();
+      } catch (err) {
+        console.error(err);
+
+        setError(
+          err.response?.data?.message || 'Failed to assign ticket'
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchTickets]
+  );
+
+  const updateTicketStatus = useCallback(
+    async (id, status) => {
+      setLoading(true);
+      setError('');
+
+      try {
+        await API.put(`/tickets/${id}/status`, {
+          status
+        });
+
+        await fetchTickets();
+      } catch (err) {
+        console.error(err);
+
+        setError(
+          err.response?.data?.message || 'Failed to update ticket status'
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchTickets]
+  );
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      token,
-      tickets,
-      loading,
-      error,
-      login,
-      logout,
-      fetchTickets,
-      createTicket,
-      assignTicket,
-      updateTicketStatus,
-      setError
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        tickets,
+        loading,
+        error,
+        login,
+        logout,
+        fetchTickets,
+        createTicket,
+        assignTicket,
+        updateTicketStatus,
+        setError
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -122,8 +176,10 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
+
   if (!ctx) {
     throw new Error('useAuth must be used within AuthProvider');
   }
+
   return ctx;
 };

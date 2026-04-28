@@ -1,54 +1,56 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
 
-const faqSchema = new mongoose.Schema({
-  question: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  answer: {
-    type: String,
-    required: true
-  },
-  category: {
-    type: String,
-    required: true,
-    enum: ['ICT Support', 'Hostel Maintenance', 'Academic Affairs', 'Finance Office', 'General Inquiry', 'Registration', 'Examinations']
-  },
-  keywords: [{
-    type: String,
-    trim: true
-  }],
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  usageCount: {
-    type: Number,
-    default: 0
-  },
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
-});
+module.exports = (sequelize) => {
+  const FAQ = sequelize.define('FAQ', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    question: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    answer: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    category: {
+      type: DataTypes.ENUM(
+        'ICT Support',
+        'Hostel Maintenance',
+        'Academic Affairs',
+        'Finance Office',
+        'General Inquiry',
+        'Registration',
+        'Examinations'
+      ),
+      allowNull: false,
+    },
+    keywords: {
+      type: DataTypes.JSON,
+      defaultValue: [],
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
+    usageCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    createdById: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'Users',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
+    },
+  }, {
+    timestamps: true,
+  });
 
-// Index for text search
-faqSchema.index({ question: 'text', answer: 'text', keywords: 'text' });
-
-// Update the updatedAt field before saving
-faqSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
-
-module.exports = mongoose.model('FAQ', faqSchema);
+  return FAQ;
+};
