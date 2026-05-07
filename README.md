@@ -7,7 +7,7 @@
 ## Tech Stack
 - **Frontend:** React.js, Vite  
 - **Backend:** Node.js, Express.js  
-- **Database:** MongoDB  
+- **Database:** Postgresql  
 - **Auth:** JWT authentication  
 - **HTTP client:** Axios
 
